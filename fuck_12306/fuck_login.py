@@ -5,6 +5,7 @@
 # @Author      : zaniu (Zzaniu@126.com)
 # @Date        : 2019/1/1 14:04 
 # @Description :
+import datetime
 import json
 import os
 import re
@@ -17,6 +18,8 @@ import requests
 import time
 from urllib3.exceptions import InsecureRequestWarning
 # 禁用安全请求警告
+from fuck_1206_2019.fuck_12306 import settings
+
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
@@ -142,16 +145,72 @@ class FuckLogin(object):
             sleep(sleep_number)
         login_url = "https://kyfw.12306.cn/passport/web/login"
         login_data = {
-            'username': 'hugong2',
-            'password': 'wenjunai93',
+            'username': settings.USERNAME,
+            'password': settings.PASSWD,
             'appid': 'otn',
             'answer': '{}'.format(check_code),
         }
         response = self.session.post(url=login_url, data=login_data, verify=False)
-        print(response.text)
+        if response.text.find('登录成功') > -1:
+            self.save_cookie()
+            print('登陆成功')
+            return True
+        else:
+            print('登录失败')
+            return False
+
+    def _get_train_ticket_sz_xh(self):
+        """写死了深圳到新化，因为我只买深圳-新化,需要别的地方可以传参城市或者写在settings里面"""
+        header = {
+            'Accept': 'text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01',
+            'Accept-Language': 'zh-CN,zh;q=0.9',
+            'Connection': 'keep-alive',
+            'Host': 'kyfw.12306.cn',
+            'Referer': 'https://kyfw.12306.cn/otn/resources/login.html',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36',
+            'X-Cache-Control': 'no-cache-With',
+            'Pragma': 'no-cache',
+        }
+        query_url = 'https://kyfw.12306.cn/otn/leftTicket/queryZ?leftTicketDTO.train_date={0}&leftTicketDTO.from_station=SZQ&leftTicketDTO.to_station=EHQ&purpose_codes=ADULT'.format(settings.GO_DATE)
+        response = self.session.get(url=query_url, headers=header, verify=False, cookies=self.get_cookie())
+        return response
+
+    def get_train_tocket_sz_xh(self):
+        try:
+            response = self._get_train_ticket_sz_xh()
+            if response.json().get('status'):
+                print('{}深圳-新化列车查询成功, 当前时间'.format(settings.GO_DATE, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                return response.json().get('data').get('result')
+        except:
+            print('查询失败...data: {}'.format(response.text))
+            return False
+
+    def prase_data(self, datas):
+        data = {}
+        for i in datas:
+            tmp_list = i.split('|')
+            data[tmp_list[3]] = {
+                '无座': tmp_list[26],
+                '硬座': tmp_list[29],
+                '硬卧': tmp_list[28],
+                '软卧': tmp_list[23],
+                '二等座': tmp_list[30],
+                '一等座': tmp_list[31],
+            }
+        print(data)
+        return data
+
+    def get_train_ticket_xh_sz(self):
+        """写死了深圳到新化，因为我只买新化-深圳"""
+        pass
 
 
 if __name__ == "__main__":
     s = FuckLogin()
-    s.login()
+    if s.login():
+        while 1:
+            data = s.get_train_tocket_sz_xh()
+            if data:
+                s.prase_data(data)
+            sleep(2)
 
