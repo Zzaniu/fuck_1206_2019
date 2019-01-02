@@ -9,6 +9,7 @@ import datetime
 import json
 import os
 import re
+import traceback
 from time import sleep
 
 from numpy import random
@@ -19,7 +20,7 @@ import time
 from urllib3.exceptions import InsecureRequestWarning
 # 禁用安全请求警告
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-from fuck_12306 import settings
+from fuck_1206_2019.fuck_12306 import settings
 
 
 image_code_dict = {
@@ -269,9 +270,13 @@ class FuckLogin(object):
             if res.get('status'):
                 print('{0}深圳-新化列车查询成功, 当前时间{1}'.format(settings.GO_DATE, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
                 print('info: {}'.format(res))
-                return res.get('data').get('result')
+                datas = res.get('data').get('result')
+                if isinstance(datas, (list, tuple)):
+                    return datas
+                else:
+                    raise Exception('没查询到数据，稍后重试')
         except:
-            print('查询失败...data: {}'.format(response.text))
+            print('查询失败..., info: {}'.format(traceback.format_exc()))
             return False
 
     def prase_data(self, datas):
@@ -500,7 +505,7 @@ class FuckLogin(object):
             'leftTicketStr': datas.get('leftTicket'),
             'key_check_isChange': train_date,
             'REPEAT_SUBMIT_TOKEN': token,
-            'passengerTicketStr': '3,0,1,{0},1,{1},,N'.format(settings.USER_NAME, settings.ID_CARD),
+            'passengerTicketStr': '3,0,1,{0},1,{1},{2},N'.format(settings.USER_NAME, settings.ID_CARD, settings.PHONE_NUMBER),
             'whatsSelect': '1',
             'seatDetailType': '000',
             'roomType': '00',
@@ -510,7 +515,7 @@ class FuckLogin(object):
             'choose_seats': '',
         }
         response = self.session.post(url=url, headers=header, data=data, cookies=self.get_cookie())
-        res = response.json()
+        print('confirm: response = ', response.text)
         if response.json().get('data').get('submitStatus'):
             print('订单已确认，已进入排队状态')
             print(response.text)
@@ -582,7 +587,12 @@ if __name__ == "__main__":
     if 1:
         s = FuckLogin()
         s.login()
-        info = s.prase_data(s.get_train_tocket_sz_xh())
+        while True:
+            try:
+                info = s.prase_data(s.get_train_tocket_sz_xh())
+                break
+            except:
+                sleep(random.randint(2,4))
         print(s.check_login())
         s.send_order(info)
         token, isChange = s.to_initdc()
