@@ -402,13 +402,17 @@ class FuckLogin(object):
             'REPEAT_SUBMIT_TOKEN': token,
         }
         response = self.session.post(url=url, headers=header, data=data, cookies=self.get_cookie())
-        if response.json().get('status'):
+        res = response.json()
+        if res.get('status'):
             print('获取乘车人信息成功')
-            print(response.json())
+            datas = {}
+            for data in res.get('data').get('normal_passengers'):
+                datas[data.get('passenger_name')] = data
+            return datas
         else:
             print('获取乘车人信息失败')
 
-    def check_passengers(self, token):
+    def check_passengers(self, token, user_dict):
         """乘车人确认"""
         url = 'https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo'
         header = {
@@ -428,7 +432,7 @@ class FuckLogin(object):
         data = {
             'cancel_flag': '2',
             'bed_level_order_num': '000000000000000000000000000000',
-            'passengerTicketStr': '3,0,1,{0},1,{1},15575971869,N'.format(settings.USER_NAME, settings.ID_CARD),  # 没有电话的话直接空着就行
+            'passengerTicketStr': '3,0,1,{0},1,{1},{2},N'.format(settings.USER_NAME, settings.ID_CARD, user_dict.get('mobile_no', '')),  # 没有电话的话直接空着就行
             'oldPassengerStr': '曾文君,1,432524199305022536,1_',
             'tour_flag': 'dc',
             'randCode': '',
@@ -596,8 +600,8 @@ if __name__ == "__main__":
         print(s.check_login())
         s.send_order(info)
         token, isChange = s.to_initdc()
-        s.get_passengers(token)
-        s.check_passengers(token)
+        user_infos = s.get_passengers(token)
+        s.check_passengers(token, user_infos.get(settings.USER_NAME))
         s.send_queue(token, info.get(settings.TRAINS_NO))
         s.confirm_buy_trains(token, isChange, info.get(settings.TRAINS_NO))
         while True:
