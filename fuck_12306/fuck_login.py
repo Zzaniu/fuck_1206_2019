@@ -20,7 +20,7 @@ import time
 from urllib3.exceptions import InsecureRequestWarning
 # 禁用安全请求警告
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-from fuck_1206_2019.fuck_12306 import settings
+from fuck_12306 import settings
 
 
 image_code_dict = {
@@ -266,6 +266,7 @@ class FuckLogin(object):
     def get_train_tocket_sz_xh(self):
         try:
             response = self._get_train_ticket_sz_xh()
+            print('trains: {}'.format(response.text))
             res = response.json()
             if res.get('status'):
                 print('{0}深圳-新化列车查询成功, 当前时间{1}'.format(settings.GO_DATE, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
@@ -432,7 +433,7 @@ class FuckLogin(object):
         data = {
             'cancel_flag': '2',
             'bed_level_order_num': '000000000000000000000000000000',
-            'passengerTicketStr': '3,0,1,{0},1,{1},{2},N'.format(settings.USER_NAME, settings.ID_CARD, user_dict.get('mobile_no', '')),  # 没有电话的话直接空着就行
+            'passengerTicketStr': '3,0,1,{0},1,{1},{2},N'.format(settings.USER_NAME, user_dict.get('passenger_id_no'), user_dict.get('mobile_no', '')),  # 没有电话的话直接空着就行
             'oldPassengerStr': '曾文君,1,432524199305022536,1_',
             'tour_flag': 'dc',
             'randCode': '',
@@ -487,7 +488,7 @@ class FuckLogin(object):
             print(response.text)
             raise Exception('大爷的')
 
-    def confirm_buy_trains(self, token, train_date, datas):
+    def confirm_buy_trains(self, token, train_date, datas, user_info):
         """确认购买"""
         url = 'https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue'
         header = {
@@ -503,13 +504,13 @@ class FuckLogin(object):
             'Accept-Language': 'zh-CN,zh;q=0.9',
         }
         data = {
-            'oldPassengerStr': '{},1,{},1_'.format(settings.USER_NAME, settings.ID_CARD),
+            'oldPassengerStr': '{},1,{},1_'.format(settings.USER_NAME, user_info.get('passenger_id_no')),
             'train_location': 'QZ',
             'dwAll': 'N',
             'leftTicketStr': datas.get('leftTicket'),
             'key_check_isChange': train_date,
             'REPEAT_SUBMIT_TOKEN': token,
-            'passengerTicketStr': '3,0,1,{0},1,{1},{2},N'.format(settings.USER_NAME, settings.ID_CARD, settings.PHONE_NUMBER),
+            'passengerTicketStr': '3,0,1,{0},1,{1},{2},N'.format(settings.USER_NAME, user_info.get('passenger_id_no'), user_info.get('mobile_no', '')),
             'whatsSelect': '1',
             'seatDetailType': '000',
             'roomType': '00',
@@ -596,14 +597,14 @@ if __name__ == "__main__":
                 info = s.prase_data(s.get_train_tocket_sz_xh())
                 break
             except:
-                sleep(random.randint(2,4))
+                sleep(random.randint(3, 5))
         print(s.check_login())
         s.send_order(info)
         token, isChange = s.to_initdc()
         user_infos = s.get_passengers(token)
         s.check_passengers(token, user_infos.get(settings.USER_NAME))
         s.send_queue(token, info.get(settings.TRAINS_NO))
-        s.confirm_buy_trains(token, isChange, info.get(settings.TRAINS_NO))
+        s.confirm_buy_trains(token, isChange, info.get(settings.TRAINS_NO), user_infos.get(settings.USER_NAME))
         while True:
             _eid = s.get_queue_status(token)
             print('_eid = ', _eid)

@@ -7,12 +7,11 @@
 # @Description :
 import os
 
-USERNAME = 'hugong2'
+USERNAME = '18173706263'
 PASSWD = os.getenv('MYSQL_PASSWORD')
+PASSWD = 'buwangchuxin4520'
 GO_DATE = '2019-01-09'  # 格式：2019-02-01
 TRAINS_NO = 'K9060'
-USER_NAME = '曾文君'
-ID_CARD = '432524199305022536'
-PHONE_NUMBER = '15575971869'
+USER_NAME = '王帅'
 
 
