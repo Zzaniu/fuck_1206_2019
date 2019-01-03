@@ -20,7 +20,7 @@ import time
 from urllib3.exceptions import InsecureRequestWarning
 # 禁用安全请求警告
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-from fuck_12306 import settings
+from fuck_1206_2019.fuck_12306 import settings
 
 
 image_code_dict = {
@@ -239,7 +239,7 @@ class FuckLogin(object):
             try:
                 if self.check_user():
                     self.get_login_cookie()
-                    s.check_uamauthclient(self.check_uamtk())
+                    self.check_uamauthclient(self.check_uamtk())
                     print('登录成功')
                     break
             except:
@@ -264,6 +264,7 @@ class FuckLogin(object):
         return response
 
     def get_train_tocket_sz_xh(self):
+        """查询车票信息"""
         try:
             response = self._get_train_ticket_sz_xh()
             print('trains: {}'.format(response.text))
@@ -324,7 +325,7 @@ class FuckLogin(object):
             'Accept-Language': 'zh-CN,zh;q=0.9',
         }
         data = {'_json_att': ''}
-        response = self.session.post(url=url, headers=header, data=data, cookies=self.get_cookie())
+        response = self.session.post(url=url, headers=header, data=data, verify=False, cookies=self.get_cookie())
         print(response.text)
         res = response.json()
         return res.get("data").get("flag")
@@ -355,7 +356,7 @@ class FuckLogin(object):
             'query_from_station_name': '新化',
             'undefined': '',
         }
-        response = self.session.post(url=url, headers=header, data=data, cookies=self.get_cookie())
+        response = self.session.post(url=url, headers=header, data=data, verify=False, cookies=self.get_cookie())
         print('order = ', response.text)
 
     def to_initdc(self):
@@ -375,7 +376,7 @@ class FuckLogin(object):
             'Accept-Language': 'zh-CN,zh;q=0.9',
         }
         data = {'_json_att': ''}
-        response = self.session.post(url=url, headers=header, data=data, cookies=self.get_cookie())
+        response = self.session.post(url=url, headers=header, data=data, verify=False, cookies=self.get_cookie())
         print('initDc = ', response.text)
         globalRepeatSubmitToken = re.findall(r"globalRepeatSubmitToken\s+=\s+'(\w+)'", response.text)
         key_check_isChange = re.findall(r"'key_check_isChange'\s*:\s*'(\w+)'", response.text)
@@ -402,7 +403,7 @@ class FuckLogin(object):
             '_json_att': '',
             'REPEAT_SUBMIT_TOKEN': token,
         }
-        response = self.session.post(url=url, headers=header, data=data, cookies=self.get_cookie())
+        response = self.session.post(url=url, headers=header, data=data, verify=False, cookies=self.get_cookie())
         res = response.json()
         if res.get('status'):
             print('获取乘车人信息成功')
@@ -465,7 +466,7 @@ class FuckLogin(object):
             '_json_att': '',
             'REPEAT_SUBMIT_TOKEN': token,
         }
-        response = self.session.post(url=url, headers=header, data=data, cookies=self.get_cookie())
+        response = self.session.post(url=url, headers=header, data=data, verify=False, cookies=self.get_cookie())
         res = response.json()
         if res.get('status') and not res.get('data').get('errMsg'):
             print('乘车人确认成功')
@@ -504,7 +505,7 @@ class FuckLogin(object):
             'purpose_codes': '00',
             '_json_att': '',
         }
-        response = self.session.post(url=url, headers=header, data=data, cookies=self.get_cookie())
+        response = self.session.post(url=url, headers=header, data=data, verify=False, cookies=self.get_cookie())
         if response.json().get('status'):
             print('排队准备完毕')
             print(response.json())
@@ -545,7 +546,7 @@ class FuckLogin(object):
             '_json_att': '',
             'choose_seats': '',
         }
-        response = self.session.post(url=url, headers=header, data=data, cookies=self.get_cookie())
+        response = self.session.post(url=url, headers=header, data=data, verify=False, cookies=self.get_cookie())
         print('confirm: response = ', response.text)
         if response.json().get('data').get('submitStatus'):
             print('订单已确认，已进入排队状态')
@@ -573,7 +574,7 @@ class FuckLogin(object):
             '_json_att': '',
             'REPEAT_SUBMIT_TOKEN': token,
         }
-        response = self.session.get(url=url, headers=header, params=data, cookies=self.get_cookie())
+        response = self.session.get(url=url, headers=header, params=data, verify=False, cookies=self.get_cookie())
         res = response.json()
         status = res.get('status')
         _eid = res.get('data').get('orderId')
@@ -602,7 +603,7 @@ class FuckLogin(object):
             '_json_att': '',
             'REPEAT_SUBMIT_TOKEN': token,
         }
-        response = self.session.post(url=url, headers=header, data=data, cookies=self.get_cookie())
+        response = self.session.post(url=url, headers=header, data=data, verify=False, cookies=self.get_cookie())
         res = response.json()
         if res.get('data').get('submitStatus'):
             print('购票成功~~~')
@@ -611,6 +612,47 @@ class FuckLogin(object):
             print('购票失败...')
             return False
 
+    def after_login(self):
+        """登陆后的动作，conf/initMy12306Api"""
+        url = 'https://kyfw.12306.cn/otn/login/conf'
+        header = {
+            'Host': 'kyfw.12306.cn',
+            'Connection': 'keep-alive',
+            'Accept': '*/*',
+            'Origin': 'https://kyfw.12306.cn',
+            'X-Requested-With': 'XMLHttpRequest',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36',
+            'Referer': 'https://kyfw.12306.cn/otn/view/index.html',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'zh-CN,zh;q=0.9',
+        }
+        response = self.session.get(url=url, headers=header, verify=False, cookies=self.get_cookie())
+        print(response.text)
+        url = 'https://kyfw.12306.cn/otn/index/initMy12306Api'
+        response = self.session.get(url=url, headers=header, verify=False, cookies=self.get_cookie())
+        print(response.text)
+
+    def get_ticket_cookies(self):
+        """查询页面cookies获取"""
+        url = 'https://kyfw.12306.cn/otn/leftTicket/init?linktypeid=dc'
+        header = {
+            'Host': 'kyfw.12306.cn',
+            'Connection': 'keep-alive',
+            'Accept': '*/*',
+            'Origin': 'https://kyfw.12306.cn',
+            'X-Requested-With': 'XMLHttpRequest',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36',
+            'Referer': 'https://kyfw.12306.cn/otn/view/index.html',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'zh-CN,zh;q=0.9',
+        }
+        response = self.session.get(url=url, headers=header, verify=False, cookies=self.get_cookie())
+        if response.status_code == 200:
+            self.save_cookie()
+            print('查询页面cookies获取成功')
+        else:
+            raise Exception('查询页面cookies获取失败')
+
 
 if __name__ == "__main__":
     # a = 'mFuCr%2F%2F7cxyYOPc%2BGAEyht2RuTfCfDlq7iwAoXimMtYyQAQXSGQox9kC2xU%3D'
@@ -618,17 +660,18 @@ if __name__ == "__main__":
     if 1:
         s = FuckLogin()
         s.login()
-        s.get_image_cookies()
+        s.after_login()
         while True:
             try:
                 info = s.prase_data(s.get_train_tocket_sz_xh())
                 break
             except:
-                sleep(random.randint(2, 4))
+                sleep(random.randint(2,4))
         print(s.check_login())
         s.send_order(info)
         token, isChange = s.to_initdc()
         user_infos = s.get_passengers(token)
+        s.get_image_cookies()
         s.check_passengers(token, user_infos.get(settings.USER_NAME))
         s.send_queue(token, info.get(settings.TRAINS_NO))
         s.confirm_buy_trains(token, isChange, info.get(settings.TRAINS_NO), user_infos.get(settings.USER_NAME))
