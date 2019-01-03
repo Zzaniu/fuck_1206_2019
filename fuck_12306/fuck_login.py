@@ -433,8 +433,9 @@ class FuckLogin(object):
         data = {
             'cancel_flag': '2',
             'bed_level_order_num': '000000000000000000000000000000',
-            'passengerTicketStr': '3,0,1,{0},1,{1},{2},N'.format(settings.USER_NAME, user_dict.get('passenger_id_no'), user_dict.get('mobile_no', '')),  # 没有电话的话直接空着就行
-            'oldPassengerStr': '曾文君,1,432524199305022536,1_',
+            # 第一个3  硬卧3 硬座1 软卧4 二等座O
+            'passengerTicketStr': '1,0,1,{0},1,{1},{2},N'.format(settings.USER_NAME, user_dict.get('passenger_id_no'), user_dict.get('mobile_no', '')),  # 没有电话的话直接空着就行
+            'oldPassengerStr': '{0},1,432524199305022536,1_'.format(settings.USER_NAME),
             'tour_flag': 'dc',
             'randCode': '',
             'whatsSelect': '1',
@@ -475,7 +476,8 @@ class FuckLogin(object):
             'fromStationTelecode': datas.get('fromStationTelecode'),
             'train_no': datas.get('train_no'),
             'REPEAT_SUBMIT_TOKEN': token,
-            'seatType': '3',
+            # 硬座1 硬卧3 软卧4 二等座O
+            'seatType': '1',
             'purpose_codes': '00',
             '_json_att': '',
         }
@@ -488,7 +490,7 @@ class FuckLogin(object):
             print(response.text)
             raise Exception('大爷的')
 
-    def confirm_buy_trains(self, token, train_date, datas, user_info):
+    def confirm_buy_trains(self, token, isChange, datas, user_info):
         """确认购买"""
         url = 'https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue'
         header = {
@@ -505,12 +507,13 @@ class FuckLogin(object):
         }
         data = {
             'oldPassengerStr': '{},1,{},1_'.format(settings.USER_NAME, user_info.get('passenger_id_no')),
-            'train_location': 'QZ',
+            'train_location': datas.get('train_location'),
             'dwAll': 'N',
             'leftTicketStr': datas.get('leftTicket'),
-            'key_check_isChange': train_date,
+            'key_check_isChange': isChange,
             'REPEAT_SUBMIT_TOKEN': token,
-            'passengerTicketStr': '3,0,1,{0},1,{1},{2},N'.format(settings.USER_NAME, user_info.get('passenger_id_no'), user_info.get('mobile_no', '')),
+            # 第一个3： 硬卧3  硬座1
+            'passengerTicketStr': '1,0,1,{0},1,{1},{2},N'.format(settings.USER_NAME, user_info.get('passenger_id_no'), user_info.get('mobile_no', '')),
             'whatsSelect': '1',
             'seatDetailType': '000',
             'roomType': '00',
@@ -597,7 +600,7 @@ if __name__ == "__main__":
                 info = s.prase_data(s.get_train_tocket_sz_xh())
                 break
             except:
-                sleep(random.randint(3, 5))
+                sleep(random.randint(2, 4))
         print(s.check_login())
         s.send_order(info)
         token, isChange = s.to_initdc()
