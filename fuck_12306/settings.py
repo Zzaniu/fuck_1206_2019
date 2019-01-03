@@ -7,7 +7,7 @@
 # @Description :
 import os
 
-USERNAME = ''
+USERNAME = 'hugong2'
 PASSWD = os.getenv('MYSQL_PASSWORD')
 GO_DATE = '2019-01-10'  # 格式：2019-02-01
 TRAINS_NO = 'K9060'

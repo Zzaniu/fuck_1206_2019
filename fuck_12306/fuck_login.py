@@ -413,6 +413,29 @@ class FuckLogin(object):
         else:
             print('获取乘车人信息失败')
 
+    def get_image_cookies(self):
+        """获取一下这个图片，实在找不到问题所在了，抓包看到这里会设置一个cookies"""
+        url = "https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew"
+        header = {
+            'Host': 'kyfw.12306.cn',
+            'Connection': 'keep-alive',
+            'Accept': '*/*',
+            'Origin': 'https://kyfw.12306.cn',
+            'X-Requested-With': 'XMLHttpRequest',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'Referer': 'https://kyfw.12306.cn/otn/confirmPassenger/initDc',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'zh-CN,zh;q=0.9',
+        }
+        data = {'module': 'passenger', 'rand': 'randp', random.random(): ""}
+        response = self.session.get(url=url, headers=header, params=data, cookies=self.get_cookie())
+        if response.status_code == 200:
+            self.save_cookie()
+            print('图片cookies获取成功')
+        else:
+            raise Exception('图片cookies获取失败')
+
     def check_passengers(self, token, user_dict):
         """乘车人确认"""
         url = 'https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo'
@@ -595,6 +618,7 @@ if __name__ == "__main__":
     if 1:
         s = FuckLogin()
         s.login()
+        s.get_image_cookies()
         while True:
             try:
                 info = s.prase_data(s.get_train_tocket_sz_xh())
