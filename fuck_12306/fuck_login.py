@@ -667,7 +667,7 @@ if __name__ == "__main__":
                 break
             except:
                 sleep(random.randint(2,4))
-        print(s.check_login())
+        s.check_login()
         s.send_order(info)
         token, isChange = s.to_initdc()
         user_infos = s.get_passengers(token)
